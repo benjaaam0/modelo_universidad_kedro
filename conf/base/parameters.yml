@@ -1,0 +1,9 @@
+# Configuración para separar los datos
+test_size: 0.2
+random_state: 42
+
+# Los hiperparámetros ganadores que descubrimos en el Notebook para el Random Forest
+rf_parametros:
+  n_estimators: 100
+  max_depth: 3
+  class_weight: "balanced"

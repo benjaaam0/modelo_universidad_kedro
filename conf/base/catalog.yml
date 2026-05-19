@@ -1,0 +1,31 @@
+# --- DATOS CRUDOS ---
+estudiantes:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/estudiantes.csv
+
+inscripciones:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/inscripciones.csv
+
+calificaciones:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/calificaciones.csv
+
+asistencia:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/asistencia.csv
+
+# --- TABLA MAESTRA (Procesada) ---
+tabla_maestra:
+  type: pandas.CSVDataset
+  filepath: data/03_primary/tabla_maestra.csv
+  load_args:
+    encoding: latin-1
+  save_args:
+    index: False
+    encoding: latin-1
+
+# --- MODELO EXPORTADO ---
+modelo_random_forest:
+  type: pickle.PickleDataset
+  filepath: data/06_models/modelo_rf.pkl
