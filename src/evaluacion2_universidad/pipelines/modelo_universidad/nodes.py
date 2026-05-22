@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-import optuna
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
@@ -31,47 +30,17 @@ def crear_tabla_maestra(df_est: pd.DataFrame, df_insc: pd.DataFrame, df_cal: pd.
     return df_master
 
 def entrenar_modelo_optuna(df_master: pd.DataFrame, test_size: float, random_state: int):
-    """Usa Optuna para encontrar los mejores parámetros y entrena el RandomForest."""
+    """Entrena el RandomForest inicial."""
     df_features = df_master[['porcentaje_asistencia', 'carrera', 'sede', 'aprueba']].dropna()
     
-    # One-Hot Encoding
     X = pd.get_dummies(df_features[['porcentaje_asistencia', 'carrera', 'sede']], drop_first=True)
     y = df_features['aprueba']
     
-    # Split
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
     
-    # --- LA MAGIA DE OPTUNA ---
-    def objective(trial):
-        # Que la IA pruebe distintas profundidades y cantidades de árboles
-        rf_max_depth = trial.suggest_int('max_depth', 2, 10)
-        rf_n_estimators = trial.suggest_categorical('n_estimators', [50, 100, 150])
-        
-        pipeline_tmp = Pipeline([
-            ('scaler', StandardScaler()),
-            ('clasificador', RandomForestClassifier(max_depth=rf_max_depth, n_estimators=rf_n_estimators, class_weight='balanced', random_state=random_state))
-        ])
-        # Probamos el modelo rápido
-        score = cross_val_score(pipeline_tmp, X_train, y_train, n_jobs=-1, cv=3, scoring='accuracy')
-        return score.mean()
-
-    # Optuna busca la combinación ganadora (solo 10 intentos para ser rápidos)
-    study = optuna.create_study(direction='maximize')
-    study.optimize(objective, n_trials=10)
-    best_params = study.best_params
-    
-    import logging
-    log = logging.getLogger(__name__)
-    log.info(f"✅ Optuna encontró los mejores parámetros: {best_params}")
-
-    # --- ENTRENAMOS EL MODEL FINAL ---
     pipeline_final = Pipeline([
         ('scaler', StandardScaler()),
-        ('clasificador', RandomForestClassifier(
-            max_depth=best_params['max_depth'], 
-            n_estimators=best_params['n_estimators'], 
-            class_weight='balanced', 
-            random_state=random_state))
+        ('clasificador', RandomForestClassifier(n_estimators=100, max_depth=5, class_weight='balanced', random_state=random_state))
     ])
     
     pipeline_final.fit(X_train, y_train)

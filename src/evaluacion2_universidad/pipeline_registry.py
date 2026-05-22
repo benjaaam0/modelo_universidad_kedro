@@ -1,16 +1,20 @@
+"""Project pipelines."""
 from typing import Dict
-from kedro.framework.project import find_pipelines
 from kedro.pipeline import Pipeline
 
-from evaluacion2_universidad.pipelines import modelo_universidad
+# Importamos las tuberías de tu proyecto
+from evaluacion2_universidad.pipelines import modelo_universidad, reporting
 
 def register_pipelines() -> Dict[str, Pipeline]:
     """Register the project's pipelines."""
     
-    # Aquí cargamos SOLO nuestra tubería
-    pipeline_universidad = modelo_universidad.create_pipeline()
+    # Traemos la tubería de tu modelo y la de reportes
+    pipeline_modelo = modelo_universidad.create_pipeline()
+    pipeline_reportes = reporting.create_pipeline()
 
+    # Sumamos las dos para que se ejecuten juntas por defecto
     return {
-        "__default__": pipeline_universidad,
-        "modelo_universidad": pipeline_universidad,
+        "__default__": pipeline_modelo + pipeline_reportes,
+        "modelo_universidad": pipeline_modelo,
+        "reporting": pipeline_reportes,
     }

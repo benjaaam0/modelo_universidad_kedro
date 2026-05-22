@@ -1,55 +1,27 @@
-import matplotlib
-import matplotlib.pyplot as plt
 import pandas as pd
-import plotly.express as px  # noqa:  F401
-import plotly.graph_objs as go
-import seaborn as sn
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+import json
 
-
-# This function uses plotly.express
-def compare_passenger_capacity_exp(preprocessed_shuttles: pd.DataFrame):
-    return (
-        preprocessed_shuttles.groupby(["shuttle_type"])
-        .mean(numeric_only=True)
-        .reset_index()
-    )
-
-
-# This function uses plotly.graph_objects
-def compare_passenger_capacity_go(preprocessed_shuttles: pd.DataFrame):
-
-    data_frame = (
-        preprocessed_shuttles.groupby(["shuttle_type"])
-        .mean(numeric_only=True)
-        .reset_index()
-    )
-    fig = go.Figure(
-        [
-            go.Bar(
-                x=data_frame["shuttle_type"],
-                y=data_frame["passenger_capacity"],
-            )
-        ]
-    )
-
-    return fig
-
-
-def create_confusion_matrix(companies: pd.DataFrame):
-    matplotlib.use('Agg')
-
-    actuals = [0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1]
-    predicted = [1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1]
-    data = {"y_Actual": actuals, "y_Predicted": predicted}
-    df = pd.DataFrame(data, columns=["y_Actual", "y_Predicted"])
-
-    confusion_matrix = pd.crosstab(
-        df["y_Actual"], df["y_Predicted"], rownames=["Actual"], colnames=["Predicted"]
-    )
-
-    fig, ax = plt.subplots(figsize=(8, 6))
-    sn.heatmap(confusion_matrix, annot=True, fmt='d', cmap='Blues', ax=ax)
-    ax.set_title('Confusion Matrix')
-    plt.tight_layout()
-
-    return fig
+def generar_reportes_y_clustering(modelo, df_master: pd.DataFrame):
+    df_features = df_master[['porcentaje_asistencia', 'carrera', 'sede', 'aprueba']].dropna()
+    X = pd.get_dummies(df_features[['porcentaje_asistencia', 'carrera', 'sede']], drop_first=True)
+    y_test = df_features['aprueba']
+    
+    y_pred = modelo.predict(X)
+    
+    # Métricas
+    reporte = classification_report(y_test, y_pred, output_dict=True)
+    reporte['accuracy'] = accuracy_score(y_test, y_pred)
+    
+    with open("data/08_reporting/metricas_clasificacion.json", "w") as f:
+        json.dump(reporte, f)
+        
+    # Gráficos
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(6,4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.savefig("data/08_reporting/matriz_confusion.png")
+    
+    return df_master
